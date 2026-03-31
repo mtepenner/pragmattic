@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// For local development, SQLite is easiest to start with.
+// When you deploy, change "sqlite" to "postgresql".
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  name               String?
+  // Crucial for background syncing:
+  googleRefreshToken String?  
+  googleCalendarId   String?  @default("primary")
+  
+  tasks              Task[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Task {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  status          String   @default("TODO") // 'TODO', 'IN_PROGRESS', 'DONE'
+  
+  // Timeboxing & Scheduling
+  dueDate         DateTime?
+  durationMinutes Int      @default(30)
+  
+  // Google Calendar Integration
+  googleEventId   String?  // The ID of the event in Google Calendar
+  lastSyncedAt    DateTime?
+  
+  // Relationships
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
